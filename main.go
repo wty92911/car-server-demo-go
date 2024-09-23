@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	controllers "github.com/wty92911/car-server-demo-go/controller"
 	"log"
+	"os"
 
 	"github.com/wty92911/car-server-demo-go/router"
 )
@@ -27,7 +27,8 @@ func main() {
 	fmt.Printf("SECRET_KEY: %s\n", *secretKey)
 
 	// 设置密钥
-	controllers.SetSecret(*secretID, *secretKey)
+	os.Setenv("SECRET_ID", *secretID)
+	os.Setenv("SECRET_KEY", *secretKey)
 	// 启动服务
 	r := router.SetupRouter()
 	r.Run(":3000")

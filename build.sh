@@ -62,6 +62,7 @@ echo -e "\033[32m${branch}\033[0m"
 
 echo
 echo [build]
+mkdir -p ./bin
 go build -ldflags "-s -w -X main.version=${version}" -o ./bin/${bin} ./
 
 echo

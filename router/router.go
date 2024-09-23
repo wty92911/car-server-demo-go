@@ -9,10 +9,10 @@ func SetupRouter() *gin.Engine {
 	router := gin.Default()
 
 	// 定义路由
-	router.POST("/StartProject", controllers.StartProject)
-	router.POST("/StopProject", controllers.StopProject)
-	router.POST("/Enqueue", controllers.Enqueue)
-	router.POST("/Dequeue", controllers.Dequeue)
+	router.POST("/StartProject", controller.StartProject)
+	router.POST("/StopProject", controller.StopProject)
+	router.POST("/Enqueue", controller.Enqueue)
+	router.POST("/Dequeue", controller.Dequeue)
 
 	return router
 }

@@ -1,77 +1,104 @@
-package controllers
+package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/wty92911/car-server-demo-go/model"
+	"github.com/wty92911/car-server-demo-go/service"
 	"net/http"
 )
 
-var (
-	secretID  = "secretID"
-	secretKey = "secretKey"
+type ErrCode int
+
+const (
+	// Success represents a successful request.
+	Success ErrCode = 0
+
+	// ErrCodeSignValidationError represents a sign validation error.
+	ErrCodeSignValidationError ErrCode = 10000
+
+	// ErrCodeInvalidParams represents a missing necessary parameter error.
+	ErrCodeInvalidParams ErrCode = 10001
+
+	// ErrCodeQueueInProcess represents a queue in process error.
+	ErrCodeQueueInProcess ErrCode = 10100
+
+	// ErrCodeQueueCompleted represents a queue completed status.
+	ErrCodeQueueCompleted ErrCode = 10101
+
+	// ErrCodeCreateSessionFailed represents a failure to create a cloud rendering session.
+	ErrCodeCreateSessionFailed ErrCode = 10200
+
+	// ErrCodeReleaseSessionFailed represents a failure to release a cloud rendering session.
+	ErrCodeReleaseSessionFailed ErrCode = 10201
+
+	// ErrCodeConcurrencyFailure represents a concurrency application failure.
+	ErrCodeConcurrencyFailure ErrCode = 10202
+
+	// ErrCodeInternalError represents a generic internal error.
+	ErrCodeInternalError ErrCode = 10002
 )
 
-func SetSecret(id, key string) {
-	secretID = id
-	secretKey = key
-}
-
-// StartProject 启动应用
 func StartProject(c *gin.Context) {
-	// 获取并处理请求参数
-	// ...
+	var params model.StartProjectParams
+	if err := c.ShouldBindJSON(&params); err != nil {
+		Err(c, ErrCodeInvalidParams, err)
+		return
+	}
 
-	// 返回响应
-	c.JSON(http.StatusOK, gin.H{
-		"Code":      0,
-		"Msg":       "Success",
-		"RequestId": "req123",
-		"SessionDescribe": gin.H{
-			"ServerSession": "session123",
-			"RequestId":     "apiReq123",
-		},
-	})
+	userIp := c.ClientIP()
+	_, err := service.ApplyConcurrent(&params, userIp)
+	if err != nil {
+		Err(c, ErrCodeConcurrencyFailure, err)
+		return
+	}
+
+	rsp, err := service.CreateSession(&params, userIp)
+	if err != nil {
+		Err(c, ErrCodeCreateSessionFailed, err)
+		return
+	}
+	Ok(c, *rsp.Response.RequestId, nil)
 }
 
-// StopProject 结束应用
 func StopProject(c *gin.Context) {
-	// 获取并处理请求参数
-	// ...
+	var params model.StopProjectParams
+	if err := c.ShouldBindJSON(&params); err != nil {
+		Err(c, ErrCodeInvalidParams, err)
+		return
+	}
 
-	// 返回响应
-	c.JSON(http.StatusOK, gin.H{
-		"Code":      0,
-		"Msg":       "Success",
-		"RequestId": "req123",
-	})
+	ret, err := service.DestroySession(params.UserId)
+	if err != nil {
+		Err(c, ErrCodeReleaseSessionFailed, err)
+		return
+	}
+	Ok(c, *ret.Response.RequestId, nil)
 }
 
-// Enqueue 用户加入队列
 func Enqueue(c *gin.Context) {
-	// 获取并处理请求参数
-	// ...
+	var params model.EnqueueParams
+	if err := c.ShouldBindJSON(&params); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	// 返回响应
-	c.JSON(http.StatusOK, gin.H{
-		"Code":      0,
-		"Msg":       "Success",
-		"RequestId": "req123",
-		"Data": gin.H{
-			"Index":     1,
-			"UserId":    "user123",
-			"ProjectId": "cap-123",
-		},
-	})
+	userIp := c.ClientIP()
+	ret, err := service.Enqueue(params, userIp)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ret)
+		return
+	}
+
+	c.JSON(http.StatusOK, ret)
 }
 
-// Dequeue 用户退出队列
 func Dequeue(c *gin.Context) {
-	// 获取并处理请求参数
-	// ...
+	var params model.DequeueParams
+	if err := c.ShouldBindJSON(&params); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	// 返回响应
-	c.JSON(http.StatusOK, gin.H{
-		"Code":      0,
-		"Msg":       "Success",
-		"RequestId": "req123",
-	})
+	service.Dequeue(params.UserId)
+	c.JSON(http.StatusOK, gin.H{"status": "OK"})
 }
