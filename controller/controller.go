@@ -5,6 +5,16 @@ import (
 	"net/http"
 )
 
+var (
+	secretID  = "secretID"
+	secretKey = "secretKey"
+)
+
+func SetSecret(id, key string) {
+	secretID = id
+	secretKey = key
+}
+
 // StartProject 启动应用
 func StartProject(c *gin.Context) {
 	// 获取并处理请求参数
