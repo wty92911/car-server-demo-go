@@ -20,10 +20,10 @@ const (
 	ErrCodeInvalidParams ErrCode = 10001
 
 	// ErrCodeQueueInProcess represents a queue in process error.
-	ErrCodeQueueInProcess ErrCode = 10100
+	CodeQueueInProcess ErrCode = 10100
 
 	// ErrCodeQueueCompleted represents a queue completed status.
-	ErrCodeQueueCompleted ErrCode = 10101
+	CodeQueueCompleted ErrCode = 10101
 
 	// ErrCodeCreateSessionFailed represents a failure to create a cloud rendering session.
 	ErrCodeCreateSessionFailed ErrCode = 10200
@@ -87,7 +87,10 @@ func Enqueue(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, rsp)
 		return
 	}
-	Ok(c, params.RequestId, rsp)
+	if rsp.Index > 0 {
+		Rsp(c, CodeQueueInProcess, params.RequestId, rsp)
+	}
+	Rsp(c, CodeQueueCompleted, params.RequestId, rsp)
 }
 
 func Dequeue(c *gin.Context) {

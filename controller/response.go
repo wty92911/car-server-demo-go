@@ -20,3 +20,12 @@ func Err(c *gin.Context, code ErrCode, err error) {
 		"Msg":  err.Error(),
 	})
 }
+
+func Rsp(c *gin.Context, code ErrCode, requestId string, data any) {
+	c.JSON(http.StatusOK, gin.H{
+		"Code":      code,
+		"Msg":       "ok",
+		"RequestId": requestId,
+		"Data":      data,
+	})
+}
