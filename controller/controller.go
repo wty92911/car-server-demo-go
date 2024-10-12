@@ -45,19 +45,19 @@ func StartProject(c *gin.Context) {
 		return
 	}
 
-	userIp := c.ClientIP()
-	_, err := service.ApplyConcurrent(&params, userIp)
+	params.UserIp = c.ClientIP()
+	_, err := service.ApplyConcurrent(&params)
 	if err != nil {
 		Err(c, ErrCodeConcurrencyFailure, err)
 		return
 	}
 
-	rsp, err := service.CreateSession(&params, userIp)
+	_, err = service.CreateSession(&params)
 	if err != nil {
 		Err(c, ErrCodeCreateSessionFailed, err)
 		return
 	}
-	Ok(c, *rsp.Response.RequestId, nil)
+	Ok(c, params.RequestId, nil)
 }
 
 func StopProject(c *gin.Context) {
@@ -67,12 +67,12 @@ func StopProject(c *gin.Context) {
 		return
 	}
 
-	ret, err := service.DestroySession(params.UserId)
+	_, err := service.DestroySession(params.UserId)
 	if err != nil {
 		Err(c, ErrCodeReleaseSessionFailed, err)
 		return
 	}
-	Ok(c, *ret.Response.RequestId, nil)
+	Ok(c, params.RequestId, nil)
 }
 
 func Enqueue(c *gin.Context) {
@@ -81,15 +81,13 @@ func Enqueue(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	userIp := c.ClientIP()
-	ret, err := service.Enqueue(params, userIp)
+	params.UserIp = c.ClientIP()
+	rsp, err := service.Enqueue(&params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, ret)
+		c.JSON(http.StatusInternalServerError, rsp)
 		return
 	}
-
-	c.JSON(http.StatusOK, ret)
+	Ok(c, params.RequestId, rsp)
 }
 
 func Dequeue(c *gin.Context) {
@@ -100,5 +98,5 @@ func Dequeue(c *gin.Context) {
 	}
 
 	service.Dequeue(params.UserId)
-	c.JSON(http.StatusOK, gin.H{"status": "OK"})
+	Ok(c, params.RequestId, nil)
 }

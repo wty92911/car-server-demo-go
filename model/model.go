@@ -4,8 +4,16 @@ import (
 	"time"
 )
 
+type QueueState int
+
+const (
+	Done QueueState = iota
+	Wait
+)
+
 type StartProjectParams struct {
 	UserId               string `json:"UserId" binding:"required"`
+	UserIp               string `json:"UserIp"`
 	ProjectId            string `json:"ProjectId" binding:"required"`
 	ApplicationId        string `json:"ApplicationId"`
 	ApplicationVersionId string `json:"ApplicationVersionId"`
@@ -22,11 +30,14 @@ type StopProjectParams struct {
 
 type EnqueueParams struct {
 	UserId               string `json:"UserId" binding:"required"`
+	UserIp               string `json:"UserIp"`
 	ProjectId            string `json:"ProjectId" binding:"required"`
 	ApplicationId        string `json:"ApplicationId"`
 	ApplicationVersionId string `json:"ApplicationVersionId"`
 	RequestId            string `json:"RequestId"`
 	Sign                 string `json:"Sign"`
+	TimeStamp            time.Time
+	State                QueueState
 }
 
 type DequeueParams struct {
@@ -35,16 +46,12 @@ type DequeueParams struct {
 	Sign      string `json:"Sign"`
 }
 
-type QueueItem struct {
-	UserId               string
-	ProjectId            string
-	ApplicationId        string
-	ApplicationVersionId string
-	UserIp               string
-	TimeStamp            time.Time
-	State                string
-}
-
 type Response struct {
 	Code int `json:"Code"`
+}
+
+type EnqueueResponse struct {
+	Index     int    `json:"Index"`
+	UserId    string `json:"UserId"`
+	ProjectId string `json:"ProjectId"`
 }
