@@ -45,9 +45,14 @@ export SECRET_KEY=xxx
 - SECRET_KEY：腾讯云帐号的 SecretKey，可在 [API 密钥管理](https://console.cloud.tencent.com/cam/capi) 中获取
 
 
-### 3. 启动服务
+### 3. 编译二进制程序
 ```shell
-sh build.sh && sh bin/server.sh
+sh build.sh
+```
+
+### 4. 启动服务
+```shell
+bin/car_server
 ```
 默认请求地址为 <http://ip:3000/xxx>
 
@@ -57,21 +62,16 @@ sh build.sh && sh bin/server.sh
 
 ### 1. 主机环境自行安装 docker 服务
 
-### 2. 生成镜像
+### 2. 编译二进制并生成镜像
 
 ```bash
-chmod 777 build.sh && ./build.sh
+sh build.sh
+sh docker_build.sh
 ```
 
 ### 3. 开启容器实例
 
-免环境变量启动：
-
-```bash
-docker run -d -p3000:3000 cgserver
-```
-
-使用环境变量输入参数（如已生成 config.json, 不需要再设置环境变量）：
+使用环境变量输入参数：
 
 ```bash
 docker run -d -p3000:3000 -e SECRET_KEY=xxx -e SECRET_ID=yyy cgserver
