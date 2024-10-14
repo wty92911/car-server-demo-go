@@ -4,8 +4,6 @@
 cd "$(cd "$(dirname "$0")";pwd)"
 
 env=$1
-unit_test=$2
-lint=$3
 bin=car_server
 
 set -e
@@ -27,28 +25,6 @@ if echo "${env}" | grep -q "mac"; then
     export GOARCH=amd64 GOOS=darwin
 fi
 
-if [ "$lint" = "lint" ]; then
-    golangci-lint run
-fi
-
-go_test() {
-    mkdir -p coverage
-    go test -coverprofile=coverage/cover.out ./...
-    if [ $? -ne 0 ]; then
-        echo "unit test failed!!!"
-        exit 1
-    fi
-    go tool cover -html=coverage/cover.out -o coverage/coverage.html
-}
-
-echo ["Unit Test"]
-
-if [ "$unit_test" = "test" ]; then
-    go_test
-else
-    echo -e "\033[31mUnit tests are not performed!\033[0m"
-fi
-
 echo
 echo [version]
 go version
@@ -66,5 +42,5 @@ mkdir -p ./bin
 go build -ldflags "-s -w -X main.version=${version}" -o ./bin/${bin} ./
 
 echo
-echo -e "\033[32m编译成功\033[0m"
+echo -e "\033[32mcompile successfully\033[0m"
 echo

@@ -59,14 +59,6 @@ sh build.sh && sh bin/server.sh
 
 ### 2. 生成镜像
 
-如需要免环境变量启动，执行
-
-```bash
-node install.js 
-```
-
-生成服务配置文件 config.json，再执行生成镜像
-
 ```bash
 chmod 777 build.sh && ./build.sh
 ```
