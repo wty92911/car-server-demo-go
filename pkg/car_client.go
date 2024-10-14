@@ -4,6 +4,7 @@ import (
 	car "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/car/v20220110"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
+	"log"
 	"os"
 )
 
@@ -21,6 +22,7 @@ func NewCarClient() *car.Client {
 		secretId,
 		secretKey,
 	)
+	log.Println("credential: ", credential)
 
 	// 创建客户端配置对象
 	cpf := profile.NewClientProfile()
@@ -30,7 +32,7 @@ func NewCarClient() *car.Client {
 
 	// 创建 CarClient 对象
 	// cloud api region, for example: ap-guangzhou, ap-beijing, ap-shanghai
-	client, err := car.NewClient(credential, "ap-tokyo", cpf)
+	client, err := car.NewClient(credential, "ap-guangzhou", cpf)
 	if err != nil {
 		panic(err)
 	}

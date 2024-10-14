@@ -8,5 +8,5 @@ A go version of [car-server-demo](https://github.com/tencentyun/car-server-demo)
 ```
 ## Run
 ```bash
-    ./bin/car_server -SECRET_ID=xxx -SECRET_KEY=xxx
+    ./bin/car_server
 ```

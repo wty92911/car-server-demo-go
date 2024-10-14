@@ -52,12 +52,12 @@ func StartProject(c *gin.Context) {
 		return
 	}
 
-	_, err = service.CreateSession(&params)
+	rsp, err := service.CreateSession(&params)
 	if err != nil {
 		Err(c, ErrCodeCreateSessionFailed, err)
 		return
 	}
-	Ok(c, params.RequestId, nil)
+	Ok(c, params.RequestId, rsp.Response.ServerSession)
 }
 
 func StopProject(c *gin.Context) {
@@ -87,8 +87,9 @@ func Enqueue(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, rsp)
 		return
 	}
-	if rsp.Index > 0 {
+	if rsp.Index >= 0 {
 		Rsp(c, CodeQueueInProcess, params.RequestId, rsp)
+		return
 	}
 	Rsp(c, CodeQueueCompleted, params.RequestId, rsp)
 }

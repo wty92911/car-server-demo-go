@@ -4,6 +4,7 @@ import (
 	car "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/car/v20220110"
 	"github.com/wty92911/car-server-demo-go/model"
 	"github.com/wty92911/car-server-demo-go/pkg"
+	"log"
 	"sync"
 	"time"
 )
@@ -20,6 +21,7 @@ var carClient = pkg.NewCarClient()
 
 func ApplyConcurrent(params *model.StartProjectParams) (*car.ApplyConcurrentResponse, error) {
 	req := car.NewApplyConcurrentRequest()
+	req.UserId = &params.UserId
 	req.ProjectId = &params.ProjectId
 	req.ApplicationId = &params.ApplicationId
 	req.ApplicationVersionId = &params.ApplicationVersionId
@@ -43,16 +45,48 @@ func DestroySession(userId string) (*car.DestroySessionResponse, error) {
 }
 
 func Enqueue(params *model.EnqueueParams) (*model.EnqueueResponse, error) {
-	params.TimeStamp = time.Now()
+	log.Println("Enqueue")
 	waitQueueLock.Lock()
+	if _, ok := waitQueue[params.UserId]; ok {
+		waitQueueLock.Unlock()
+		return &model.EnqueueResponse{
+			Index:     queue.IndexOf(params.UserId),
+			UserId:    params.UserId,
+			ProjectId: params.ProjectId,
+		}, nil
+	}
+	waitQueueLock.Unlock()
+	log.Println("Enqueue1")
+	// 尝试申请并发
+	applyParams := &model.StartProjectParams{
+		UserId:               params.UserId,
+		ProjectId:            params.ProjectId,
+		ApplicationId:        params.ApplicationId,
+		ApplicationVersionId: params.ApplicationVersionId,
+		UserIp:               params.UserIp,
+	}
+	_, err := ApplyConcurrent(applyParams)
+	if err == nil {
+		return &model.EnqueueResponse{
+			Index:     -1,
+			UserId:    params.UserId,
+			ProjectId: params.ProjectId,
+		}, nil
+	}
+	log.Println("Enqueue2")
+	// 申请失败，加入队列
+	waitQueueLock.Lock()
+	params.TimeStamp = time.Now()
 	waitQueue[params.UserId] = params
 	waitQueueLock.Unlock()
+	log.Println("Enqueue3")
 	queue.Enqueue(params.UserId, shouldDequeue)
 	rsp := &model.EnqueueResponse{
 		Index:     queue.IndexOf(params.UserId),
 		UserId:    params.UserId,
 		ProjectId: params.ProjectId,
 	}
+	log.Println("Enqueue4")
 	return rsp, nil
 }
 

@@ -11,7 +11,6 @@ type CallbackFunc func(string) bool
 
 type BaseQueue struct {
 	checkInterval time.Duration
-	checkTimer    *time.Timer
 	mu            sync.Mutex
 	queue         []string
 	indexes       map[string]int
@@ -25,11 +24,12 @@ func NewBaseQueue(checkInterval time.Duration) *BaseQueue {
 		indexes:       make(map[string]int),
 		callbacks:     make(map[string]CallbackFunc),
 	}
-	bq.checkTimer = time.AfterFunc(bq.checkInterval, bq.checkQueue)
+	time.AfterFunc(bq.checkInterval, bq.checkQueue)
 	return bq
 }
 
 func (bq *BaseQueue) CanDequeue(key string) (bool, error) {
+	log.Printf("checking can dequeue: %s\n", key)
 	bq.mu.Lock()
 	defer bq.mu.Unlock()
 
@@ -46,27 +46,37 @@ func (bq *BaseQueue) CanDequeue(key string) (bool, error) {
 }
 
 func (bq *BaseQueue) checkQueue() {
+	log.Println("checking queue")
+	bq.mu.Lock()
+	for i := range bq.queue {
+		log.Printf("queue: %s\n", bq.queue[i])
+	}
+	bq.mu.Unlock()
+
 	if bq.Count() > 0 {
 		item := bq.First()
 		if ok, err := bq.CanDequeue(item); err == nil && ok {
 			bq.Dequeue(item)
-		} else {
-			log.Fatal(err)
 		}
 	}
+	time.AfterFunc(bq.checkInterval, bq.checkQueue)
 }
 
 func (bq *BaseQueue) Dequeue(key string) {
+	log.Printf("dequeueing: %s\n\n", key)
 	index := bq.IndexOf(key)
 	if index == -1 {
 		return
 	}
+	bq.mu.Lock()
 	bq.queue = append(bq.queue[:index], bq.queue[index+1:]...)
+	bq.mu.Unlock()
 	bq.RemoveCallback(key)
 	bq.reloadIndexes()
 }
 
 func (bq *BaseQueue) IndexOf(key string) int {
+	log.Printf("checking index of %s\n", key)
 	bq.mu.Lock()
 	defer bq.mu.Unlock()
 
@@ -78,6 +88,7 @@ func (bq *BaseQueue) IndexOf(key string) int {
 }
 
 func (bq *BaseQueue) reloadIndexes() {
+	log.Printf("reloading indexes...\n")
 	bq.mu.Lock()
 	defer bq.mu.Unlock()
 
@@ -88,6 +99,7 @@ func (bq *BaseQueue) reloadIndexes() {
 }
 
 func (bq *BaseQueue) Enqueue(key string, checkQueueDoneCallback CallbackFunc) {
+	log.Printf("enqueing: %s\n\n", key)
 	index := bq.IndexOf(key)
 	bq.AddCallback(key, checkQueueDoneCallback)
 	if index >= 0 {
@@ -99,42 +111,29 @@ func (bq *BaseQueue) Enqueue(key string, checkQueueDoneCallback CallbackFunc) {
 	bq.indexes[key] = len(bq.queue) - 1
 }
 
-func (bq *BaseQueue) GetKeyByIndex(index int) string {
-	bq.mu.Lock()
-	defer bq.mu.Unlock()
-
-	if index < len(bq.queue) {
-		return bq.queue[index]
-	}
-	return ""
-}
-
 func (bq *BaseQueue) AddCallback(key string, cb CallbackFunc) {
+	log.Printf("adding callback: %s\n\n", key)
 	bq.mu.Lock()
 	defer bq.mu.Unlock()
 	bq.callbacks[key] = cb
 }
 
 func (bq *BaseQueue) RemoveCallback(key string) {
+	log.Printf("removing callback: %s\n\n", key)
 	bq.mu.Lock()
 	defer bq.mu.Unlock()
 	delete(bq.callbacks, key)
 }
 
-func (bq *BaseQueue) GetCallback(key string) (CallbackFunc, bool) {
-	bq.mu.Lock()
-	defer bq.mu.Unlock()
-	cb, exists := bq.callbacks[key]
-	return cb, exists
-}
-
 func (bq *BaseQueue) Count() int {
+	log.Printf("checking count...\n")
 	bq.mu.Lock()
 	defer bq.mu.Unlock()
 	return len(bq.queue)
 }
 
 func (bq *BaseQueue) First() string {
+	log.Printf("checking first...\n")
 	bq.mu.Lock()
 	defer bq.mu.Unlock()
 	if len(bq.queue) == 0 {
